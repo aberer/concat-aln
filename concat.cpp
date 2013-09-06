@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstring>
 #include <fstream>
 #include <libgen.h>
 #include <unordered_set>
@@ -12,6 +13,27 @@
 typedef unsigned int nat; 
 const char delim = '\t'; 
 
+
+
+static void writeModelFile(const std::vector<std::unordered_map<std::string, std::string>> &alignments, std::string outfile, const std::vector<std::string > &names)
+{
+  assert(names.size() == alignments.size() ); 
+
+  std::ofstream finalModel(outfile); 
+
+  nat pos = 1; 
+  nat ctr = 0; 
+  for(auto aln : alignments)
+    {
+      nat newPos = pos + aln.begin()->second.size(); 
+      auto strCpy = strdup(names.at(ctr).c_str()); 
+      auto partName = std::string(basename(strCpy) ); 
+      finalModel << "DNA, " <<  partName << "=" << pos << "-" << newPos -1  << std::endl ; 
+      ++ctr; 
+      pos = newPos ;
+      free(strCpy); 
+    }
+}
 
 
 static void writeAlignment(const std::unordered_map<std::string, std::string>  &finalAlignment,  std::string outfilename, bool isFasta) 
@@ -125,9 +147,9 @@ int main(int argc, char **argv)
   std::cout << "checked" << std::endl;
 
   auto finalAlignment = std::unordered_map<std::string,std::string>(); 
-  std::ofstream finalModel(id + ".model"); 
-  nat pos = 1; 
-  nat ctr = 1; 
+
+
+
   for(auto aln : alignments)
     {
       auto length = aln.begin()->second.size(); 
@@ -139,16 +161,15 @@ int main(int argc, char **argv)
 	  else 	    
 	    finalAlignment[taxon] += found->second; 
 	}
-
-      // write model file 
-      nat newPos = pos + aln.begin()->second.size(); 
-      auto partName = basename(argv[ctr])      ; 
-      finalModel << "DNA, " <<  partName << "=" << pos << "-" << newPos -1  << std::endl ; 
-      ++ctr; 
-      pos = newPos ;
     }
 
 
+  // generate names 
+  auto names = std::vector<std::string>{}; 
+  for(int i =  3 ; i < argc; ++i)
+    names.push_back(std::string(argv[i]));
+
+  writeModelFile(alignments, id + ".model", names); 
   writeAlignment(finalAlignment, id + ".phy", isFasta); 
 
   return 0; 

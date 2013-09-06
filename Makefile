@@ -1,7 +1,7 @@
 
 
 
-CXXFLAGS=-std=c++0x -O3 
+CXXFLAGS=-std=c++0x -O3  -Wall -Wextra 
 
 all : concat-fasta
 
