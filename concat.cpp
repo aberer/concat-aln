@@ -82,6 +82,8 @@ int main(int argc, char **argv)
       auto aln = std::unordered_map<std::string, std::string>(); 
       std::string line; 
       
+      std::cout << "parsing alignment "  << argv[i] << std::endl;
+      
       auto lastElem = aln.begin(); 
       while(std::getline(in, line))
 	{
@@ -102,12 +104,16 @@ int main(int argc, char **argv)
       alignments.push_back(aln);
     }
 
+  std::cout << "parsed alignments" << std::endl;
+
   // get all the taxa 
   auto taxa = std::unordered_set<std::string>(); 
   for(auto aln : alignments)
     for(auto elem : aln)
       taxa.insert(elem.first); 
   
+  std::cout << "extracted taxa " << std::endl; 
+
   // sanity check 
   for(auto aln : alignments)
     {
@@ -115,6 +121,8 @@ int main(int argc, char **argv)
       for(auto elem : aln ) 
 	assert(length == elem.second.size() ); 
     }
+  
+  std::cout << "checked" << std::endl;
 
   auto finalAlignment = std::unordered_map<std::string,std::string>(); 
   std::ofstream finalModel(id + ".model"); 
