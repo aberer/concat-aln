@@ -13,18 +13,69 @@ typedef unsigned int nat;
 const char delim = '\t'; 
 
 
+
+static void writeAlignment(const std::unordered_map<std::string, std::string>  &finalAlignment,  std::string outfilename, bool isFasta) 
+{
+  // write alignment 
+  std::ofstream finalAln( outfilename); 
+  
+  if(isFasta)
+    {
+      for(auto &elem : finalAlignment)
+	{
+	  auto name = elem.first; 
+	  name.erase( std::remove_if(name.begin(), name.end(), 
+				     []( int c){return (  c == '>' )  ; }),
+		      name.end()); 
+	  finalAln << ">" << name << "\n" ; 
+	  finalAln << elem.second << std::endl; 
+	}
+    }
+  else 
+    {
+      finalAln << finalAlignment.size() << delim << finalAlignment.begin()->second.size() << std::endl; 
+      for(auto &elem : finalAlignment)
+	{
+	  auto name = elem.first; 
+	  name.erase( std::remove_if(name.begin(), name.end(), 
+				     []( int c){return (  c == '>' )  ; }),
+		      name.end()); 
+	  finalAln << name << delim << elem.second << std::endl;       
+	}
+    }
+}
+
+
 int main(int argc, char **argv)
 {
   auto alignments =  std::vector<std::unordered_map<std::string, std::string> > (); 
 
-  if(argc == 1 )
+  if(argc < 3 )
     {
-      std::cout << "Usage: " << argv[0] << " file[..]" << std::endl; 
+      std::cout << "Usage: " << argv[0] << "\tFASTA|PHYLIP id file[..]"
+		<< "\n\twhere FASTA|PHYLIP indicates the format of the output file\n"
+		<< "\tand id is an id that is used for creating the output files"
+		<< std::endl; 
       exit(1); 
     }
 
+  auto formatString = std::string(argv[1]); 
+  auto id = std::string(argv[2]); 
 
-  for(int i = 1; i < argc; ++i)
+  bool isFasta = formatString.compare("FASTA") == 0 ; 
+  if(not isFasta)
+    {
+      bool isPhylip = formatString.compare("PHYLIP") == 0; 
+      if(not isPhylip)
+	{
+	  std::cout << "format string (first argument) must be either PHYLIP or FASTA" << std::endl; 
+	  exit(-1); 
+	}
+    }
+
+
+  
+  for(int i = 3; i < argc; ++i)
     {
       auto &&in = std::ifstream(std::string(argv[i])); 
 
@@ -66,7 +117,7 @@ int main(int argc, char **argv)
     }
 
   auto finalAlignment = std::unordered_map<std::string,std::string>(); 
-  std::ofstream finalModel("aln.model"); 
+  std::ofstream finalModel(id + ".model"); 
   nat pos = 1; 
   nat ctr = 1; 
   for(auto aln : alignments)
@@ -90,18 +141,7 @@ int main(int argc, char **argv)
     }
 
 
-  // write alignment 
-  std::ofstream finalAln("aln.phy"); 
-  finalAln << finalAlignment.size() << delim << finalAlignment.begin()->second.size() << std::endl; 
-  for(auto &elem : finalAlignment)
-    {
-      auto name = elem.first; 
-      name.erase(
-		 std::remove_if(name.begin(), name.end(), 
-				[]( int c){return (  c == '>' )  ; }),
-		 name.end()); 
-      finalAln << name << delim << elem.second << std::endl;       
-    }
+  writeAlignment(finalAlignment, id + ".phy", isFasta); 
 
   return 0; 
 }
